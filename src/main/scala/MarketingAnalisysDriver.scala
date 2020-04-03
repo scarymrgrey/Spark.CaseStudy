@@ -45,6 +45,7 @@ object MarketingAnalisysDriver {
 
     def lastInCol(col: Column) = last(col, ignoreNulls = true).over(windowLastOverUser)
 
+    //TASK 1.1
     events
       .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
       .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
@@ -59,7 +60,23 @@ object MarketingAnalisysDriver {
         'sessionId,
         'campaignId,
         'channelIid)
-      .where('userId === "u2")
-      .show(truncate = false)
+      //.where('userId === "u2")
+      .createOrReplaceTempView("aggregated_purchases")
+
+    spark
+      .sql("select * from aggregated_purchases")
+      .show()
+
+    // TASK 2.1
+    spark
+      .sql(
+        """select
+          | campaignId, sum(billingCost) as revenue
+          | from aggregated_purchases
+          | where isConfirmed = true
+          | group by campaignId
+          | order by revenue desc
+          | limit 10""".stripMargin)
+      .show()
   }
 }
