@@ -5,9 +5,10 @@ import java.util.UUID
 import org.apache.spark.{HashPartitioner, Partitioner}
 import org.apache.spark.sql.expressions.{Aggregator, Window}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Encoder, Encoders, SparkSession}
+import org.apache.spark.sql.{Column, Encoder, Encoders, SparkSession}
 import com.typesafe.config._
 import pureconfig.ConfigSource
+
 import collection.JavaConverters._
 
 object MarketingAnalisysDriver {
@@ -26,7 +27,7 @@ object MarketingAnalisysDriver {
       .add("eventId", StringType)
       .add("eventTime", TimestampType)
       .add("eventType", StringType)
-      .add("attributes",StringType, true)
+      .add("attributes", StringType, true)
 
     val events = spark
       .read
@@ -38,19 +39,26 @@ object MarketingAnalisysDriver {
       .read
       .option("header", "true")
       .csv("purchases_sample - purchases_sample.csv")
+      .as("purchases")
 
-    val windowOverUser = Window.partitionBy('userId).orderBy('eventTime)
+    val windowLastOverUser = Window.partitionBy('userId).orderBy('eventTime).rowsBetween(Window.unboundedPreceding, 0)
+
+    def lastInCol(col: Column) = last(col, ignoreNulls = true).over(windowLastOverUser)
+
     events
       .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
       .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
       .orderBy('eventTime)
       .withColumn("session_start", when('eventType === "app_open", monotonically_increasing_id()))
-      .withColumn("session",
-        last('session_start, ignoreNulls = true).over(windowOverUser.rowsBetween(Window.unboundedPreceding, 0))
-      )
-      .join(purchases, $"attributes.purchase_id" === 'purchaseId, "left")
-      .withColumn("campaignId",$"attributes.campaign_id")
-      .withColumn("channelIid",$"attributes.channel_id")
+      .withColumn("sessionId", lastInCol('session_start))
+      .withColumn("campaignId", lastInCol($"attributes.campaign_id"))
+      .withColumn("channelIid", lastInCol($"attributes.channel_id"))
+      .join(purchases, $"attributes.purchase_id" === 'purchaseId)
+      .select($"purchases.*",
+        'eventType,
+        'sessionId,
+        'campaignId,
+        'channelIid)
       .where('userId === "u2")
       .show(truncate = false)
   }
