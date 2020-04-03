@@ -39,14 +39,19 @@ object MarketingAnalisysDriver {
       .option("header", "true")
       .csv("purchases_sample - purchases_sample.csv")
 
+    val windowOverUser = Window.partitionBy('userId).orderBy('eventTime)
     events
       .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
       .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
       .orderBy('eventTime)
       .withColumn("session_start", when('eventType === "app_open", monotonically_increasing_id()))
+      .withColumn("session",
+        last('session_start, ignoreNulls = true).over(windowOverUser.rowsBetween(Window.unboundedPreceding, 0))
+      )
       .join(purchases, $"attributes.purchase_id" === 'purchaseId, "left")
       .withColumn("campaignId",$"attributes.campaign_id")
       .withColumn("channelIid",$"attributes.channel_id")
+      .where('userId === "u2")
       .show(truncate = false)
   }
 }
