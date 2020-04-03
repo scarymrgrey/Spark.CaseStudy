@@ -21,7 +21,7 @@ object MarketingAnalisysDriver {
 
     import org.apache.spark.sql.types._
     import spark.implicits._
-
+    val sessionTempTableName = "sessionsTemporary"
     val productsSchema = new StructType()
       .add("userId", StringType)
       .add("eventId", StringType)
@@ -54,29 +54,43 @@ object MarketingAnalisysDriver {
       .withColumn("sessionId", lastInCol('session_start))
       .withColumn("campaignId", lastInCol($"attributes.campaign_id"))
       .withColumn("channelIid", lastInCol($"attributes.channel_id"))
+      .createOrReplaceTempView(sessionTempTableName)
+
+    val aggregatedPurchasesTableName = "aggregated_purchases"
+    spark.table(sessionTempTableName)
       .join(purchases, $"attributes.purchase_id" === 'purchaseId)
       .select($"purchases.*",
         'eventType,
         'sessionId,
         'campaignId,
         'channelIid)
-      //.where('userId === "u2")
-      .createOrReplaceTempView("aggregated_purchases")
+      .createOrReplaceTempView(aggregatedPurchasesTableName)
 
     spark
-      .sql("select * from aggregated_purchases")
-      .show()
+      .sql(s"select * from $aggregatedPurchasesTableName")
+    //  .show()
 
     // TASK 2.1
     spark
       .sql(
-        """select
-          | campaignId, sum(billingCost) as revenue
-          | from aggregated_purchases
-          | where isConfirmed = true
-          | group by campaignId
-          | order by revenue desc
-          | limit 10""".stripMargin)
-      .show()
+        s"""select
+           | campaignId, sum(billingCost) as revenue
+           | from  $aggregatedPurchasesTableName
+           | where isConfirmed = true
+           | group by campaignId
+           | order by revenue desc
+           | limit 10""".stripMargin)
+    // .show()
+
+    //TASK 2.2
+    spark.sql(s"""select
+              | channelIid
+              | from $sessionTempTableName
+              | group by campaignId, channelIid
+              | order by count(distinct sessionId) desc
+              | limit 1""".stripMargin)
+          .show()
+
+    spark.stop()
   }
 }
