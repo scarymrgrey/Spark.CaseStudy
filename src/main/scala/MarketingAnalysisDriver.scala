@@ -2,6 +2,7 @@ package com.task
 import com.task.core.jobs.MarketingAnalysisJobProcessor
 import com.task.infastructure.{DataLoader, Spark, WithSettings}
 import org.apache.avro.generic.GenericData.StringType
+import org.apache.spark.sql.functions.col
 
 object MarketingAnalysisDriver extends Spark with WithSettings with DataLoader {
 
@@ -12,7 +13,6 @@ object MarketingAnalysisDriver extends Spark with WithSettings with DataLoader {
     val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
     
     import jobsProcessor._
-    import org.apache.spark.sql.functions.col
 
     //TASK 1.1
     val (sessionsDataFrame, purchasesDataFrame) = getPurchasesWithSessions
