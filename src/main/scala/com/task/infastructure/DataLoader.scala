@@ -7,7 +7,11 @@ trait DataLoader {
   self: Spark with WithSettings =>
   type EventsAndPurchases = (DataFrame, DataFrame)
 
-  def loadFromSettings: EventsAndPurchases = {
+  def loadFromSettingsWithArgs(args: Array[String]): EventsAndPurchases = {
+
+    val namedArgs = args.map(_.split("--")).map(y=>(y(0),y(1))).toMap
+    val eventsInputPath = namedArgs.getOrElse("eventsInput", settings.eventsFilePath)
+    val purchasesInputPath = namedArgs.getOrElse("purchasesInput", settings.purchasesFilePath)
 
     import org.apache.spark.sql.types._
     val productsSchema = new StructType()
@@ -21,7 +25,7 @@ trait DataLoader {
       .read
       .option("header", "true")
       .schema(productsSchema)
-      .csv(settings.eventsFilePath)
+      .csv(eventsInputPath)
 
     val events = rawEvents
       .transform(JsonTransformations.recover("attributes"))
@@ -29,7 +33,7 @@ trait DataLoader {
     val purchases = spark
       .read
       .option("header", "true")
-      .csv(settings.purchasesFilePath)
+      .csv(purchasesInputPath)
       .as("purchases")
 
     (events, purchases)
