@@ -11,7 +11,7 @@ object MarketingAnalysisDriver extends Spark with WithSettings with DataLoader {
     import jobsProcessor._
 
     //TASK 1.1
-    val (sessionsDataFrame, purchasesDataFrame) = getPurchases
+    val (sessionsDataFrame, purchasesDataFrame) = getPurchasesWithSessions
     //TASK 1.2
     showPurchasesViaAggregator
     //TASK 2.1

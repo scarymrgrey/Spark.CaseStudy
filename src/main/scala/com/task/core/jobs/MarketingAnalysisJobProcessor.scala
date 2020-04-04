@@ -11,7 +11,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
   type SessionsAndPurchases = (DataFrame, DataFrame)
 
   //TASK 1.1
-  def getPurchases(implicit spark: SparkSession): SessionsAndPurchases = {
+  def getPurchasesWithSessions(implicit spark: SparkSession): SessionsAndPurchases = {
     val sessions = rawEvents
       .transform(SessionTransformations.enrichWithSession)
     val purchases = sessions
