@@ -1,7 +1,7 @@
 package transformations
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{last, monotonically_increasing_id, when}
+import org.apache.spark.sql.functions.{concat, last, lit, monotonically_increasing_id, when}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 object SessionTransformations {
@@ -11,7 +11,7 @@ object SessionTransformations {
     def lastInCol(col: Column) = last(col, ignoreNulls = true).over(windowLastOverUser)
     events
       .orderBy('eventTime)
-      .withColumn("session_start", when('eventType === "app_open", monotonically_increasing_id()))
+      .withColumn("session_start", when('eventType === "app_open", concat(lit("session_"), monotonically_increasing_id())))
       .withColumn("sessionId", lastInCol('session_start))
       .withColumn("campaignId", lastInCol($"attributes.campaign_id"))
       .withColumn("channelIid", lastInCol($"attributes.channel_id"))
