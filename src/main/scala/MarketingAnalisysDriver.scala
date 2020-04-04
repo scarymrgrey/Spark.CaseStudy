@@ -9,6 +9,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, Encoder, Encoders, SparkSession}
 import com.typesafe.config._
 import pureconfig.ConfigSource
+import transformations.SessionTransformations
 
 import collection.JavaConverters._
 
@@ -40,49 +41,35 @@ object MarketingAnalisysDriver {
       .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
       .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
 
-
     val purchases = spark
       .read
       .option("header", "true")
       .csv("purchases_sample - purchases_sample.csv")
       .as("purchases")
 
-    val windowLastOverUser = Window.partitionBy('userId).orderBy('eventTime).rowsBetween(Window.unboundedPreceding, 0)
-
-    def lastInCol(col: Column) = last(col, ignoreNulls = true).over(windowLastOverUser)
-
     //TASK 1.1
     events
-      .orderBy('eventTime)
-      .withColumn("session_start", when('eventType === "app_open", monotonically_increasing_id()))
-      .withColumn("sessionId", lastInCol('session_start))
-      .withColumn("campaignId", lastInCol($"attributes.campaign_id"))
-      .withColumn("channelIid", lastInCol($"attributes.channel_id"))
-
+      .transform(SessionTransformations.enrichWithSession)
       .createOrReplaceTempView(sessionTempTableName)
 
     val aggregatedPurchasesTableName = "aggregated_purchases"
     spark.table(sessionTempTableName)
-      .join(purchases, $"attributes.purchase_id" === 'purchaseId)
-      .select($"purchases.*",
-        'eventType,
-        'sessionId,
-        'campaignId,
-        'channelIid)
+      .transform(SessionTransformations.transformWithJoin(purchases))
       .createOrReplaceTempView(aggregatedPurchasesTableName)
 
     spark
       .sql(s"select * from $aggregatedPurchasesTableName")
-    //  .show()
+      .show()
 
     //TASK 1.2
     val aggregator = new SessionAggregator()
     events
       .as[Event]
-      .where('userId === "u3")
       .groupByKey(r => r.userId)
       .agg(aggregator.toColumn)
       .flatMap(_._2)
+      .toDF()
+      .transform(SessionTransformations.transformWithJoin(purchases))
       .show(100, truncate = false)
 
     // TASK 2.1
@@ -95,7 +82,7 @@ object MarketingAnalisysDriver {
            | group by campaignId
            | order by revenue desc
            | limit 10""".stripMargin)
-    // .show()
+     .show()
 
     //TASK 2.2
     spark.sql(
@@ -105,7 +92,7 @@ object MarketingAnalisysDriver {
          | group by campaignId, channelIid
          | order by count(distinct sessionId) desc
          | limit 1""".stripMargin)
-    // .show()
+    .show()
 
     spark.stop()
   }
