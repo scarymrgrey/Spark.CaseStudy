@@ -8,7 +8,7 @@ import com.task.core.models._
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.{Encoder, Encoders}
 
-class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[EventOverSession]] with Serializable {
+object SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[EventOverSession]] with Serializable {
 
   override def zero: SessionsWithRawEvents = SessionsWithRawEvents(List(), List())
 

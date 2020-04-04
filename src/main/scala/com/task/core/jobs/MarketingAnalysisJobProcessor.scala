@@ -25,7 +25,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
     rawEvents
       .as[Event]
       .groupByKey(r => r.userId)
-      .agg(new SessionAggregator().toColumn)
+      .agg(SessionAggregator.toColumn)
       .flatMap(_._2)
       .toDF()
       .transform(SessionTransformations.transformWithJoin(rawPurchases))
