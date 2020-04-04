@@ -1,12 +1,12 @@
+package com.task.core.agg
+
+
 import java.io.Serializable
-import java.sql.Timestamp
 import java.util.UUID
 
 import com.task.core.models._
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.{Encoder, Encoders}
-import scala.collection.immutable.TreeSet
-import scala.collection.SortedSet
 
 class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[EventOverSession]] with Serializable {
 
