@@ -13,7 +13,9 @@ SortedSet[] instead of List
 - output to the filesystem, configurable
 - top companies N as a parameter in application.conf
 - could be run as assembly:
+
             _sbt assembly_
+            
             _java -jar target/scala-2.12/SparkTest-assembly-1.0.jar eventsInput--/path/to/file.csv purchasesInput--/path/to/file2.csv_ 
         
 
