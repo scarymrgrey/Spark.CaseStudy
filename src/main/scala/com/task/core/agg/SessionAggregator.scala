@@ -29,7 +29,7 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
   }
 
   private def insertOneEvent(sessions: List[Session], event: Event): List[Session] = {
-    val (after,before) = sessions
+    val (after, before) = sessions
       .partition(session => session.startTime.after(event.eventTime))
     val updated = before match {
       case head :+ session =>
@@ -53,16 +53,19 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
   override def merge(b1: SessionsWithRawEvents, b2: SessionsWithRawEvents): SessionsWithRawEvents =
     SessionsWithRawEvents(insertAllEvents(b1.sessions, b1.rawEvents) ::: insertAllEvents(b2.sessions, b2.rawEvents), List())
 
-  override def finish(sessions: SessionsWithRawEvents): List[EventOverSession] =
-    sessions.sessions.flatMap(r => r.events.map(e => EventOverSession(
-      e.eventType,
-      e.eventTime,
-      e.userId,
-      r.campaignId,
-      r.channelIid,
-      r.sessionId,
-      e.attributes
-    )))
+  override def finish(sessionWithRaw: SessionsWithRawEvents): List[EventOverSession] =
+    for {
+      sess <- sessionWithRaw.sessions
+      ev <- sess.events
+    } yield EventOverSession(
+      ev.eventType,
+      ev.eventTime,
+      ev.userId,
+      sess.campaignId,
+      sess.channelIid,
+      sess.sessionId,
+      ev.attributes
+    )
 
   override def bufferEncoder: Encoder[SessionsWithRawEvents] = Encoders.product[SessionsWithRawEvents]
 
