@@ -2,8 +2,8 @@ package com.task.core.jobs
 
 import com.task.core.agg.SessionAggregator
 import com.task.core.models.Event
+import com.task.transformations.SessionTransformations
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import transformations.SessionTransformations
 
 class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, sessionTableName: String, purchasesTableName: String) {
 
