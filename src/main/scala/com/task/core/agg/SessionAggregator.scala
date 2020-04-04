@@ -11,7 +11,7 @@ import org.apache.spark.sql.{Encoder, Encoders}
 
 import scala.collection.SortedSet
 
-class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[EventOverSession]] with Serializable {
+object SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[EventOverSession]] with Serializable {
 
   override def zero: SessionsWithRawEvents = SessionsWithRawEvents(SortedSet(), List())
 

@@ -7,7 +7,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, sessionTableName: String, purchasesTableName: String) {
 
-  //TASK 1.1
   def saveAndShowPurchases(implicit spark: SparkSession): Unit = {
     events
       .transform(SessionTransformations.enrichWithSession)
@@ -27,7 +26,7 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, ses
     events
       .as[Event]
       .groupByKey(r => r.userId)
-      .agg(new SessionAggregator().toColumn)
+      .agg(SessionAggregator.toColumn)
       .flatMap(_._2)
       .toDF()
       .transform(SessionTransformations.transformWithJoin(purchases))
