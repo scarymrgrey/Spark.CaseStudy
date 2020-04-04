@@ -14,9 +14,9 @@ SortedSet[] instead of List
 - top companies N as a parameter in application.conf
 - could be run as assembly:
 
-            _sbt assembly_
+            sbt assembly
             
-            _java -jar target/scala-2.12/SparkTest-assembly-1.0.jar eventsInput--/path/to/file.csv purchasesInput--/path/to/file2.csv_ 
+            java -jar target/scala-2.12/SparkTest-assembly-1.0.jar eventsInput--/path/to/file.csv purchasesInput--/path/to/file2.csv 
         
 
 **General notes**
