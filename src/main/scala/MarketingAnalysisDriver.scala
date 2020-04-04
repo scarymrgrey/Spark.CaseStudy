@@ -43,10 +43,13 @@ object MarketingAnalysisDriver {
 
     //TASK 1.1
     saveAndShowPurchases
+
     //TASK 1.2
     showPurchasesViaAggregator
+
     // TASK 2.1
     showTopCampaigns
+
     //TASK 2.2
     showChannelsEngagementPerformance
 
