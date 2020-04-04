@@ -1,7 +1,7 @@
 **Marketing Analysis case study**
 
-In this git-repository persists two branches:
-- _master_      the basic one
+In this git-repository contains **two** branches:
+- _master_      basic implementation
 - _feature/alternative-implementation_ alternative implementation
 
 **Change notes on**     _feature/alternative-implementation_ 
