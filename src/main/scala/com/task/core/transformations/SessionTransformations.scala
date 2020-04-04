@@ -1,4 +1,4 @@
-package com.task.transformations
+package com.task.core.transformations
 
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{concat, last, lit, monotonically_increasing_id, when}
