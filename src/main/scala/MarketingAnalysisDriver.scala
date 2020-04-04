@@ -27,7 +27,7 @@ object MarketingAnalysisDriver extends WithConfig {
     val (sessions, purchasesDataFrame) = getPurchases
     //TASK 1.2
     showPurchasesViaAggregator
-    // TASK 2.1
+    //TASK 2.1
     showTopCampaigns(purchasesDataFrame)
     //TASK 2.2
     showChannelsEngagementPerformance(sessions)
