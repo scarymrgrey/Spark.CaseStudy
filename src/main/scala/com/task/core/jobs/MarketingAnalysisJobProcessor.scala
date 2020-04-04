@@ -3,7 +3,7 @@ package com.task.core.jobs
 import com.task.core.agg.SessionAggregator
 import com.task.core.models.Event
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import transformations.SessionTransformations
+import com.task.transformations.SessionTransformations
 import org.apache.spark.sql.functions._
 
 class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFrame) {

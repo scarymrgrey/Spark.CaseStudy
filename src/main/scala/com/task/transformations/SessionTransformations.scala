@@ -1,4 +1,4 @@
-package transformations
+package com.task.transformations
 
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
