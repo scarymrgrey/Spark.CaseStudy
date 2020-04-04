@@ -10,6 +10,8 @@ SortedSet[] instead of List
 - alternative DataFrame's implementation for the Tasks 2.1 and 2.2
 - more aggressive refactoring
 - added application configuration
+- output to the filesystem, configurable
+- top companies N as a parameter in application.conf
 
 **General notes**
 - in sake of performance, some intermediate data stored in temporary tables
