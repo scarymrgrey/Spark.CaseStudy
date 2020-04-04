@@ -18,7 +18,7 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, ses
       .createOrReplaceTempView(purchasesTableName)
 
     spark
-      .sql(s"select * from $purchases")
+      .sql(s"select * from $purchasesTableName")
       .show()
   }
 
