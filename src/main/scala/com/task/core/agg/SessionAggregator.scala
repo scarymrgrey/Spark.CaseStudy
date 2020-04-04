@@ -12,7 +12,6 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
 
   override def zero: SessionsWithRawEvents = SessionsWithRawEvents(List(), List())
 
-
   override def reduce(sessionsWithRaw: SessionsWithRawEvents, ev: Event): SessionsWithRawEvents = {
     ev.eventType match {
       case "app_open" =>
