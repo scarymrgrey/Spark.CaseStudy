@@ -24,7 +24,6 @@ object SessionTransformations {
     import spark.implicits._
     df.join(joinDF, $"attributes.purchase_id" === 'purchaseId)
       .select($"purchases.*",
-        'eventType,
         'sessionId,
         'campaignId,
         'channelIid)
