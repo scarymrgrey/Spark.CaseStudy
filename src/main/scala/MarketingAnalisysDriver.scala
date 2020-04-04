@@ -2,6 +2,7 @@ import java.io.Serializable
 import java.sql.Timestamp
 import java.util.UUID
 
+import com.task.core.models.Event
 import org.apache.spark.{HashPartitioner, Partitioner}
 import org.apache.spark.sql.expressions.{Aggregator, Window}
 import org.apache.spark.sql.functions._
@@ -29,11 +30,16 @@ object MarketingAnalisysDriver {
       .add("eventType", StringType)
       .add("attributes", StringType, true)
 
-    val events = spark
+    val rawEvents = spark
       .read
       .option("header", "true")
       .schema(productsSchema)
       .csv("mobile-app-clickstream_sample - mobile-app-clickstream_sample.csv")
+
+    val events = rawEvents
+      .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
+      .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
+
 
     val purchases = spark
       .read
@@ -47,13 +53,12 @@ object MarketingAnalisysDriver {
 
     //TASK 1.1
     events
-      .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
-      .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
       .orderBy('eventTime)
       .withColumn("session_start", when('eventType === "app_open", monotonically_increasing_id()))
       .withColumn("sessionId", lastInCol('session_start))
       .withColumn("campaignId", lastInCol($"attributes.campaign_id"))
       .withColumn("channelIid", lastInCol($"attributes.channel_id"))
+
       .createOrReplaceTempView(sessionTempTableName)
 
     val aggregatedPurchasesTableName = "aggregated_purchases"
@@ -70,6 +75,16 @@ object MarketingAnalisysDriver {
       .sql(s"select * from $aggregatedPurchasesTableName")
     //  .show()
 
+    //TASK 1.2
+    val aggregator = new SessionAggregator()
+    events
+      .as[Event]
+      .where('userId === "u3")
+      .groupByKey(r => r.userId)
+      .agg(aggregator.toColumn)
+      .flatMap(_._2)
+      .show(100, truncate = false)
+
     // TASK 2.1
     spark
       .sql(
@@ -83,13 +98,14 @@ object MarketingAnalisysDriver {
     // .show()
 
     //TASK 2.2
-    spark.sql(s"""select
-              | channelIid
-              | from $sessionTempTableName
-              | group by campaignId, channelIid
-              | order by count(distinct sessionId) desc
-              | limit 1""".stripMargin)
-          .show()
+    spark.sql(
+      s"""select
+         | channelIid
+         | from $sessionTempTableName
+         | group by campaignId, channelIid
+         | order by count(distinct sessionId) desc
+         | limit 1""".stripMargin)
+    // .show()
 
     spark.stop()
   }
