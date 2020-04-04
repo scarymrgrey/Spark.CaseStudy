@@ -1,13 +1,20 @@
 **Marketing Analysis case study**
 
-In this git-repository contains **two** branches:
+This git-repository contains **three** branches:
 - _master_      basic implementation
 - _feature/alternative-implementation_ alternative implementation
+- _feature/alternative-aggregator-on-sorted-set_    one more alternative implementation, with aggregator based on 
+SortedSet[] instead of List
 
 **Change notes on**     _feature/alternative-implementation_ 
-- alternative DataFrame's implementation for the Tasks 1.1 and 1.2
+- alternative DataFrame's implementation for the Tasks 2.1 and 2.2
 - more aggressive refactoring
 - added application configuration
+
+**General notes**
+- in sake of performance, some intermediate data stored in temporary tables
+- in branch _feature/alternative-aggregator-on-sorted-set_ SortedSet is used as a container for the Sessions,
+it allows to get rid of re-sorting entire collection while reduce and merge phases 
 
 **Aggregator task implementation details**
 
