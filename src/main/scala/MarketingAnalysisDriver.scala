@@ -19,19 +19,18 @@ object MarketingAnalysisDriver extends WithConfig {
       .loadOrThrow[AppSettings]
 
     val (events, purchases) = loadFromSettings(settings, spark)
-    val sessionsTn = "sessionsTemporary"
-    val aggregatedPurchasesTn = "aggregatedPurchasesTemporary"
-    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases, sessionsTn, aggregatedPurchasesTn)
+
+    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
     import jobsProcessor._
 
     //TASK 1.1
-    saveAndShowPurchases
+    val (sessions, purchasesDataFrame) = getPurchases
     //TASK 1.2
-    showPurchasesViaAggregator
+    //showPurchasesViaAggregator
     // TASK 2.1
-    showTopCampaigns
+    showTopCampaigns(purchasesDataFrame)
     //TASK 2.2
-    showChannelsEngagementPerformance
+    //showChannelsEngagementPerformance
 
     spark.stop()
   }
