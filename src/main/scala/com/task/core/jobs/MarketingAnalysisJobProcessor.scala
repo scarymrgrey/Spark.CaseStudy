@@ -20,7 +20,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
     (sessions, purchases)
   }
 
-  def showPurchasesViaAggregator(implicit spark: SparkSession): Unit = {
+  def showPurchasesViaAggregator(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     rawEvents
       .as[Event]
@@ -29,30 +29,28 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .flatMap(_._2)
       .toDF()
       .transform(SessionTransformations.transformWithJoin(rawPurchases))
-      .show()
+
   }
 
-  def showTopCampaigns(purchases: DataFrame)(implicit spark: SparkSession): Unit = {
+  def showTopCampaigns(top: Int, purchases: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     purchases
       .where('isConfirmed === true)
       .groupBy('campaignId)
       .agg(sum('billingCost).as("revenue"))
       .orderBy('revenue.desc)
-      .limit(10)
-      .show()
+      .limit(top)
   }
 
-  def showChannelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): Unit = {
+  def showChannelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
     sessions
-      .groupBy('campaignId,'channelIid)
+      .groupBy('campaignId, 'channelIid)
       .agg(countDistinct('sessionId) as "uniqueSessions")
       .orderBy('uniqueSessions.desc)
       .select('channelIid)
       .limit(1)
-      .show()
   }
 
 }
