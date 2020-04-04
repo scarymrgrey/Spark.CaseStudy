@@ -39,6 +39,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .groupBy('campaignId)
       .agg(sum('billingCost).as("revenue"))
       .orderBy('revenue.desc)
+      .select('campaignId)
       .limit(top)
   }
 
