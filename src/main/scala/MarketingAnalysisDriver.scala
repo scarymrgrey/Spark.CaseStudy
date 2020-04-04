@@ -28,9 +28,9 @@ object MarketingAnalysisDriver extends WithConfig {
     //TASK 1.2
     //showPurchasesViaAggregator
     // TASK 2.1
-    showTopCampaigns(purchasesDataFrame)
+    //showTopCampaigns(purchasesDataFrame)
     //TASK 2.2
-    //showChannelsEngagementPerformance
+    showChannelsEngagementPerformance(sessions)
 
     spark.stop()
   }
