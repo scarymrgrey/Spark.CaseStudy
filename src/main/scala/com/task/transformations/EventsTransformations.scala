@@ -1,10 +1,11 @@
 package com.task.transformations
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.{concat, last, lit, monotonically_increasing_id, when}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
-object SessionTransformations {
+object EventsTransformations {
+
   def enrichWithSession(events: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     val windowLastOverUser = Window.partitionBy('userId).orderBy('eventTime).rowsBetween(Window.unboundedPreceding, 0)

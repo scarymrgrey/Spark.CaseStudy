@@ -36,23 +36,26 @@ object MarketingAnalysisDriver {
       .csv("purchases_sample - purchases_sample.csv")
       .as("purchases")
 
-    val sessionsTn = "sessionsTemporary"
-    val aggregatedPurchasesTn = "aggregatedPurchasesTemporary"
-    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases, sessionsTn, aggregatedPurchasesTn)
+
+    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
     import jobsProcessor._
 
     //TASK 1.1
-    saveAndShowPurchases
+    saveAndGetPurchases
+      .show()
 
     //TASK 1.2
-    showPurchasesViaAggregator
+    purchasesViaAggregator
+      .show()
 
     // TASK 2.1
-    showTopCampaigns
+    topCampaigns
+      .show()
 
     //TASK 2.2
-    showChannelsEngagementPerformance
-
+    channelsEngagementPerformance
+      .show()
+    
     spark.stop()
   }
 }

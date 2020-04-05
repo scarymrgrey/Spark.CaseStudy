@@ -2,27 +2,29 @@ package com.task.core.jobs
 
 import com.task.core.agg.SessionAggregator
 import com.task.core.models.Event
-import com.task.transformations.SessionTransformations
+import com.task.transformations.EventsTransformations
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, sessionTableName: String, purchasesTableName: String) {
+class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame) {
+
+  val sessionTableName = "sessionsTemporary"
+  val purchasesTableName = "aggregatedPurchasesTemporary"
 
   //TASK 1.1
-  def saveAndShowPurchases(implicit spark: SparkSession): Unit = {
+  def saveAndGetPurchases(implicit spark: SparkSession): DataFrame = {
     events
-      .transform(SessionTransformations.enrichWithSession)
+      .transform(EventsTransformations.enrichWithSession)
       .createOrReplaceTempView(sessionTableName)
 
     spark.table(sessionTableName)
-      .transform(SessionTransformations.transformWithJoin(purchases))
+      .transform(EventsTransformations.transformWithJoin(purchases))
       .createOrReplaceTempView(purchasesTableName)
 
     spark
       .sql(s"select * from $purchasesTableName")
-      .show()
   }
 
-  def showPurchasesViaAggregator(implicit spark: SparkSession): Unit = {
+  def purchasesViaAggregator(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     events
       .as[Event]
@@ -30,11 +32,10 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, ses
       .agg(new SessionAggregator().toColumn)
       .flatMap(_._2)
       .toDF()
-      .transform(SessionTransformations.transformWithJoin(purchases))
-      .show()
+      .transform(EventsTransformations.transformWithJoin(purchases))
   }
 
-  def showTopCampaigns(implicit spark: SparkSession): Unit = {
+  def topCampaigns(implicit spark: SparkSession): DataFrame = {
     spark
       .sql(
         s"""select
@@ -44,10 +45,10 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, ses
            | group by campaignId
            | order by revenue desc
            | limit 10""".stripMargin)
-      .show()
+
   }
 
-  def showChannelsEngagementPerformance(implicit spark: SparkSession): Unit = {
+  def channelsEngagementPerformance(implicit spark: SparkSession): DataFrame = {
     spark.sql(
       s"""select
          | channelIid
@@ -55,7 +56,6 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame, ses
          | group by campaignId, channelIid
          | order by count(distinct sessionId) desc
          | limit 1""".stripMargin)
-      .show()
   }
 
 }
