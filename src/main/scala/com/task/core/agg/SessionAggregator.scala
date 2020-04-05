@@ -21,7 +21,7 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
           ev.attributes.flatMap(_.get("campaign_id")),
           ev.attributes.flatMap(_.get("channel_id"))
         )
-        sessionsWithRaw.copy(sessions = (sessionsWithRaw.sessions :+ newSession).sorted)
+        sessionsWithRaw.copy(sessions = (sessionsWithRaw.sessions :+ newSession))
       case _ =>
         sessionsWithRaw.copy(rawEvents = sessionsWithRaw.rawEvents :+ ev)
     }
@@ -30,22 +30,22 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
   private def insertOneEvent(sessions: List[Session], event: Event): List[Session] = {
     val (after,before) = sessions
       .partition(session => session.startTime.after(event.eventTime))
-    val updated = before match {
+    val updatedBefore = before.sorted match {
       case head :+ session =>
         head :+ session.copy(
           events = session.events :+ event
         )
     }
-    updated ::: after
+    updatedBefore ::: after
   }
 
   @scala.annotation.tailrec
   private def insertAllEvents(sessions: List[Session], events: List[Event]): List[Session] = {
     events match {
-      case Nil => sessions
       case head :: tail =>
         val updatedSessions = insertOneEvent(sessions, head)
         insertAllEvents(updatedSessions, tail)
+      case Nil => sessions
     }
   }
 

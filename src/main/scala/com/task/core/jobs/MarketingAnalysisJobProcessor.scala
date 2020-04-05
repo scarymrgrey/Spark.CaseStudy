@@ -35,23 +35,23 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame) {
       .transform(EventsTransformations.transformWithJoin(purchases))
   }
 
-  def topCampaigns(implicit spark: SparkSession): DataFrame = {
+  def topCampaigns(top: Int)(implicit spark: SparkSession): DataFrame = {
     spark
       .sql(
         s"""select
-           | campaignId, sum(billingCost) as revenue
+           | campaignId as MarketingCampaign, sum(billingCost) as Revenue
            | from  $purchasesTableName
            | where isConfirmed = true
            | group by campaignId
            | order by revenue desc
-           | limit 10""".stripMargin)
+           | limit $top""".stripMargin)
 
   }
 
   def channelsEngagementPerformance(implicit spark: SparkSession): DataFrame = {
     spark.sql(
       s"""select
-         | channelIid
+         | channelIid as TopChannel
          | from $sessionTableName
          | group by campaignId, channelIid
          | order by count(distinct sessionId) desc

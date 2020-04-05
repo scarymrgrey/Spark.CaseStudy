@@ -1,18 +1,33 @@
 import com.task.core.jobs.MarketingAnalysisJobProcessor
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import scala.util.Try
+import cats.effect.IO
 
 object MarketingAnalysisDriver {
 
   def main(args: Array[String]): Unit = {
 
-    implicit val spark: SparkSession = SparkSession.builder
-      .master("local[*]")
-      .appName("spark test")
-      .getOrCreate()
+    val program = IO {
+      SparkSession.builder
+        .master("local[*]")
+        .appName("spark test")
+        .getOrCreate()
 
-    import org.apache.spark.sql.types._
+    }.bracket { spark =>
+      IO(doJobs(spark))
+    } { spark =>
+      IO(spark.close())
+    }
+
+    program.unsafeRunSync()
+  }
+
+  def doJobs(implicit spark: SparkSession): Unit = {
+
     import spark.implicits._
+
     val productsSchema = new StructType()
       .add("userId", StringType)
       .add("eventId", StringType)
@@ -49,13 +64,11 @@ object MarketingAnalysisDriver {
       .show()
 
     // TASK 2.1
-    topCampaigns
+    topCampaigns(10)
       .show()
 
     //TASK 2.2
     channelsEngagementPerformance
       .show()
-    
-    spark.stop()
   }
 }
