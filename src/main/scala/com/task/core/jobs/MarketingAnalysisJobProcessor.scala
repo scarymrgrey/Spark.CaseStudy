@@ -28,10 +28,9 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .flatMap(_._2)
       .toDF()
       .transform(SessionTransformations.transformWithJoin(rawPurchases))
-
   }
 
-  def topCompaigns(top: Int, purchases: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def topCompaigns(top: Int, purchases: DataFrame): DataFrame = {
     purchases
       .where('isConfirmed === true)
       .groupBy('campaignId)
@@ -41,7 +40,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .limit(top)
   }
 
-  def channelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def channelsEngagementPerformance(sessions: DataFrame): DataFrame = {
     sessions
       .groupBy('campaignId, 'channelIid)
       .agg(countDistinct('sessionId) as "uniqueSessions")
