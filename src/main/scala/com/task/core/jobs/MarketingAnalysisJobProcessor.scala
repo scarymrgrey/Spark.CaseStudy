@@ -51,11 +51,10 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame) {
   def channelsEngagementPerformance(implicit spark: SparkSession): DataFrame = {
     spark.sql(
       s"""select
-         | channelIid as TopChannel
+         | distinct campaignId as Campaign,
+         | first(channelIid) over(partition by campaignId order by count(distinct sessionId) desc) as TopChannel
          | from $sessionTableName
-         | group by campaignId, channelIid
-         | order by count(distinct sessionId) desc
-         | limit 1""".stripMargin)
+         | group by campaignId, channelIid""".stripMargin)
   }
 
 }
