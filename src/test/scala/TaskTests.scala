@@ -14,22 +14,24 @@ class TaskTests extends AnyFlatSpec
 
   case class Campaigns(campaignId: String)
 
-  case class Engagements(Campaign: String, TopChannel: String)
+  case class Engagements(campaignId: String, TopChannel: String)
 
   implicit def sparkSession: SparkSession = spark
 
   import spark.implicits._
 
-  var sessions: DataFrame = _
-  var purchases: DataFrame = _
+  var aggSessions: DataFrame = _
+  var aggPurchases: DataFrame = _
   var processor: MarketingAnalysisJobProcessor = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    val data = loadFromSettingsWithArgs(Array())
-    sessions = data._1
-    purchases = data._2
+    val (sessions, purchases) = loadFromSettingsWithArgs(Array())
+
     processor = new MarketingAnalysisJobProcessor(sessions, purchases)
+    val data = processor.getPurchasesWithSessions
+    aggSessions = data._1
+    aggPurchases = data._2
     org.apache.spark.sql.catalyst.encoders.OuterScopes.addOuterScope(this)
   }
 
@@ -56,8 +58,6 @@ class TaskTests extends AnyFlatSpec
   }
 
   it should "for top campaigns" in {
-    val (_,aggPurchases) = processor.getPurchasesWithSessions
-
     val res = processor.topCompaigns(10, aggPurchases)
       .as[Campaigns]
       .collect()
@@ -68,7 +68,7 @@ class TaskTests extends AnyFlatSpec
   }
 
   it should "for top channels" in {
-    val res = processor.channelsEngagementPerformance(sessions)
+    val res = processor.channelsEngagementPerformance(aggSessions)
       .as[Engagements]
       .collect()
 
