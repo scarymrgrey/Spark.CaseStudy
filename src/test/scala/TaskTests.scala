@@ -11,6 +11,8 @@ class TaskTests extends FunSuite
                       billingCost: String, isConfirmed: Boolean,
                       sessionId: String, campaignId: String, channelIid: String)
 
+  case class Campaigns(MarketingCampaign: String, Revenue: Double)
+
   implicit def sparkSession: SparkSession = spark
 
   import spark.implicits._
@@ -35,5 +37,24 @@ class TaskTests extends FunSuite
 
     assert(res nonEmpty, "should contain rows")
     assert(res.count(_.isConfirmed) == 4, "4 confirmed purchases")
+  }
+
+  test("basic tests for aggregator") {
+    val res = processor.purchasesViaAggregator
+      .as[Purchase]
+      .collect()
+
+    assert(res nonEmpty, "should contain rows")
+    assert(res.count(_.isConfirmed) == 4, "4 confirmed purchases")
+  }
+
+  test("for top campaigns") {
+    val res = processor.topCampaigns(10)
+      .as[Campaigns]
+      .collect()
+
+    assert(res nonEmpty, "should contain rows")
+    assert(res.head == Campaigns("cmp1",300.5), "should be cmp1 300.5")
+    assert(res.length == 2, "contains only 2 campaigns")
   }
 }
