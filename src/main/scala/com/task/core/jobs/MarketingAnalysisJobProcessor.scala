@@ -6,11 +6,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.task.transformations.SessionTransformations
 import org.apache.spark.sql.functions._
 
-class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFrame) {
+class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFrame)(implicit spark: SparkSession) {
 
   type SessionsAndPurchases = (DataFrame, DataFrame)
+  import spark.implicits._
 
-  def getPurchasesWithSessions(implicit spark: SparkSession): SessionsAndPurchases = {
+  def getPurchasesWithSessions: SessionsAndPurchases = {
     val sessions = rawEvents
       .transform(SessionTransformations.enrichWithSession)
     val purchases = sessions
@@ -19,8 +20,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
     (sessions, purchases)
   }
 
-  def purchasesViaAggregator(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
+  def purchasesViaAggregator: DataFrame = {
     rawEvents
       .as[Event]
       .groupByKey(r => r.userId)
@@ -32,7 +32,6 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
   }
 
   def topCompaigns(top: Int, purchases: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
     purchases
       .where('isConfirmed === true)
       .groupBy('campaignId)
@@ -43,8 +42,6 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
   }
 
   def channelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): DataFrame = {
-    import spark.implicits._
-
     sessions
       .groupBy('campaignId, 'channelIid)
       .agg(countDistinct('sessionId) as "uniqueSessions")
@@ -52,5 +49,4 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .select('channelIid)
       .limit(1)
   }
-
 }
