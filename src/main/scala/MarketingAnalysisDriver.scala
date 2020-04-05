@@ -1,12 +1,9 @@
 package com.task
 
-import MarketingAnalysisDriver.{doJobs, loadFromSettingsWithArgs}
 import cats.effect.IO
-import com.task.core.jobs.MarketingAnalysisJobProcessor
+import cats.syntax.functor._
 import com.task.infastructure.{DataLoader, WithJobs, WithSettings}
-import org.apache.avro.generic.GenericData.StringType
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.col
 
 object MarketingAnalysisDriver extends WithSettings with DataLoader with WithJobs {
 
@@ -27,7 +24,7 @@ object MarketingAnalysisDriver extends WithSettings with DataLoader with WithJob
       } yield ()
 
     } { spark =>
-      IO(spark.close())
+      IO(spark.close()).void
     }
 
     program.unsafeRunSync()
