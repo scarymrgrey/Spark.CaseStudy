@@ -1,13 +1,13 @@
 package com.task.infastructure
 
 import com.task.transformations.JsonTransformations
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 trait DataLoader {
-  self: Spark with WithSettings =>
+  self: WithSettings =>
   type EventsAndPurchases = (DataFrame, DataFrame)
 
-  def loadFromSettingsWithArgs(args: Array[String]): EventsAndPurchases = {
+  def loadFromSettingsWithArgs(args: Array[String])(implicit spark : SparkSession): EventsAndPurchases = {
 
     val namedArgs = args.map(_.split("--")).map(y=>(y(0),y(1))).toMap
     val eventsInputPath = namedArgs.getOrElse("eventsInput", settings.eventsFilePath)

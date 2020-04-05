@@ -1,50 +1,36 @@
 package com.task
+
+import MarketingAnalysisDriver.{doJobs, loadFromSettingsWithArgs}
+import cats.effect.IO
 import com.task.core.jobs.MarketingAnalysisJobProcessor
-import com.task.infastructure.{DataLoader, Spark, WithSettings}
+import com.task.infastructure.{DataLoader, WithJobs, WithSettings}
 import org.apache.avro.generic.GenericData.StringType
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.col
 
-object MarketingAnalysisDriver extends Spark with WithSettings with DataLoader {
+object MarketingAnalysisDriver extends WithSettings with DataLoader with WithJobs {
 
   def main(args: Array[String]): Unit = {
 
-    val (events, purchases) = loadFromSettingsWithArgs(args)
+    val program = IO {
+      SparkSession.builder
+        .master("local[*]")
+        .appName("spark test")
+        .getOrCreate()
 
-    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
-    
-    import jobsProcessor._
+    }.bracket { implicit spark =>
 
-    //TASK 1.1
-    val (sessionsDataFrame, purchasesDataFrame) = getPurchasesWithSessions
-    sessionsDataFrame
-      .cache()
-      .withColumn("attributes", col("attributes").cast("string"))
-      .repartition(1)
-      .write
-      .mode("overwrite")
-      .csv(settings.outputSessionsPath)
+      for {
+        data <- IO(loadFromSettingsWithArgs(args))
+        (events, purchases) = data
+        _ <- IO(doJobs(events, purchases))
+      } yield ()
 
-    //TASK 1.2
-    showPurchasesViaAggregator
-      .repartition(1)
-      .write
-      .mode("overwrite")
-      .csv(settings.outputPurchasesPath)
+    } { spark =>
+      IO(spark.close())
+    }
 
-    //TASK 2.1
-    showTopCampaigns(settings.topCompaniesToShow, purchasesDataFrame)
-      .repartition(1)
-      .write
-      .mode("overwrite")
-      .csv(settings.outputTopCompaniesPath)
+    program.unsafeRunSync()
 
-    //TASK 2.2
-    showChannelsEngagementPerformance(sessionsDataFrame)
-      .repartition(1)
-      .write
-      .mode("overwrite")
-      .csv(settings.outputChannelEngagementsPath)
-
-    spark.stop()
   }
 }
