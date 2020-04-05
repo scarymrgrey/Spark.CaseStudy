@@ -45,7 +45,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
   def channelsEngagementPerformance(sessions: DataFrame): DataFrame = {
     sessions
       .groupBy('campaignId, 'channelIid)
-      .agg(first('channelIid).over(Window.partitionBy('campaignId).orderBy(countDistinct('sessionId))) as "TopChannel")
+      .agg(first('channelIid).over(Window.partitionBy('campaignId).orderBy(countDistinct('sessionId).desc)) as "TopChannel")
       .drop('channelIid)
       .distinct()
   }
