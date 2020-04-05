@@ -22,7 +22,7 @@ object SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[E
           ev.attributes.flatMap(_.get("campaign_id")),
           ev.attributes.flatMap(_.get("channel_id"))
         )
-        sessionsWithRaw.copy(sessions = (sessionsWithRaw.sessions :+ newSession).sorted)
+        sessionsWithRaw.copy(sessions = sessionsWithRaw.sessions :+ newSession)
       case _ =>
         sessionsWithRaw.copy(rawEvents = sessionsWithRaw.rawEvents :+ ev)
     }
@@ -31,7 +31,7 @@ object SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[E
   private def insertOneEvent(sessions: List[Session], event: Event): List[Session] = {
     val (after, before) = sessions
       .partition(session => session.startTime.after(event.eventTime))
-    val updated = before match {
+    val updated = before.sorted match {
       case head :+ session =>
         head :+ session.copy(
           events = session.events :+ event

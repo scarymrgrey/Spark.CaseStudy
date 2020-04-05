@@ -20,7 +20,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
     (sessions, purchases)
   }
 
-  def showPurchasesViaAggregator(implicit spark: SparkSession): DataFrame = {
+  def purchasesViaAggregator(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     rawEvents
       .as[Event]
@@ -32,7 +32,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
 
   }
 
-  def showTopCampaigns(top: Int, purchases: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def topCompaigns(top: Int, purchases: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     purchases
       .where('isConfirmed === true)
@@ -43,7 +43,7 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
       .limit(top)
   }
 
-  def showChannelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def channelsEngagementPerformance(sessions: DataFrame)(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
 
     sessions

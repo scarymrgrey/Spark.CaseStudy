@@ -26,21 +26,21 @@ trait WithJobs {
       .csv(settings.outputSessionsPath)
 
     //TASK 1.2
-    showPurchasesViaAggregator
+    purchasesViaAggregator
       .repartition(1)
       .write
       .mode("overwrite")
       .csv(settings.outputPurchasesPath)
 
     //TASK 2.1
-    showTopCampaigns(settings.topCompaniesToShow, purchasesDataFrame)
+    topCompaigns(settings.topCompaniesToShow, purchasesDataFrame)
       .repartition(1)
       .write
       .mode("overwrite")
       .csv(settings.outputTopCompaniesPath)
 
     //TASK 2.2
-    showChannelsEngagementPerformance(sessionsDataFrame)
+    channelsEngagementPerformance(sessionsDataFrame)
       .repartition(1)
       .write
       .mode("overwrite")
