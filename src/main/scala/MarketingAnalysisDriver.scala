@@ -39,7 +39,7 @@ object MarketingAnalysisDriver {
       .read
       .option("header", "true")
       .schema(productsSchema)
-      .csv("mobile-app-clickstream_sample - mobile-app-clickstream_sample.csv")
+      .csv("src/main/resources/mobile-app-clickstream_sample - mobile-app-clickstream_sample.csv")
 
     val events = rawEvents
       .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
@@ -48,7 +48,7 @@ object MarketingAnalysisDriver {
     val purchases = spark
       .read
       .option("header", "true")
-      .csv("purchases_sample - purchases_sample.csv")
+      .csv("src/main/resources/purchases_sample - purchases_sample.csv")
       .as("purchases")
 
 
