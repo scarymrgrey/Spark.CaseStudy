@@ -11,5 +11,7 @@ libraryDependencies ++= List(
   "com.github.pureconfig" %% "pureconfig" % "0.12.3",
   "org.typelevel" %% "cats-core" % "2.1.1",
   "org.typelevel" %% "cats-effect" % "2.1.2",
-  "com.holdenkarau" %% "spark-testing-base" % "2.4.5_0.14.0" % "test"
+  "com.holdenkarau" %% "spark-testing-base" % "2.4.5_0.14.0" % "test",
+  "org.scalactic" %% "scalactic" % "3.1.1",
+  "org.scalatest" %% "scalatest" % "3.1.1" % "test"
 )
