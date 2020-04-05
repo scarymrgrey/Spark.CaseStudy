@@ -24,6 +24,9 @@ SortedSet instead of List
 - in branch _feature/alternative-aggregator-on-sorted-set_ SortedSet is used as a container for the Sessions,
 it allows to get rid of re-sorting entire collection while reduce and merge phases 
 
+**Tests**
+        _sbt test_
+        
 **Aggregator task implementation details**
 
 The main idea is that if we dont have order inside each group, but we know that event 

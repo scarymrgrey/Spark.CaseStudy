@@ -1,11 +1,12 @@
 import cats.effect.IO
 import cats.syntax.functor._
+import com.task.core.data.DataLoader
 import com.task.core.jobs.MarketingAnalysisJobProcessor
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
-object MarketingAnalysisDriver {
+object MarketingAnalysisDriver extends DataLoader {
 
   def main(args: Array[String]): Unit = {
 
@@ -26,31 +27,7 @@ object MarketingAnalysisDriver {
 
   def doJobs(implicit spark: SparkSession): Unit = {
 
-    import spark.implicits._
-
-    val productsSchema = new StructType()
-      .add("userId", StringType)
-      .add("eventId", StringType)
-      .add("eventTime", TimestampType)
-      .add("eventType", StringType)
-      .add("attributes", StringType, true)
-
-    val rawEvents = spark
-      .read
-      .option("header", "true")
-      .schema(productsSchema)
-      .csv("src/main/resources/mobile-app-clickstream_sample - mobile-app-clickstream_sample.csv")
-
-    val events = rawEvents
-      .withColumn("attributes", expr("substring(attributes,2,length(attributes)-2)"))
-      .withColumn("attributes", from_json('attributes, MapType(StringType, StringType)))
-
-    val purchases = spark
-      .read
-      .option("header", "true")
-      .csv("src/main/resources/purchases_sample - purchases_sample.csv")
-      .as("purchases")
-
+    val (events, purchases) = loadData
 
     val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
     import jobsProcessor._

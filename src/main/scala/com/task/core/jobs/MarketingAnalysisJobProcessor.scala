@@ -7,8 +7,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame) {
 
-  val sessionTableName = "sessionsTemporary"
-  val purchasesTableName = "aggregatedPurchasesTemporary"
+  private val sessionTableName = "sessionsTemporary"
+  private val purchasesTableName = "aggregatedPurchasesTemporary"
 
   //TASK 1.1
   def saveAndGetPurchases(implicit spark: SparkSession): DataFrame = {
