@@ -1,13 +1,12 @@
 package com.task.infastructure
 
-import com.task.MarketingAnalysisDriver.{loadFromSettingsWithArgs, settings}
 import com.task.core.jobs.MarketingAnalysisJobProcessor
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.col
 import pureconfig.ConfigSource
 
-trait WithJobs {
+trait WithJobs  { self : WithSettings =>
 
   def doJobs(events: DataFrame, purchases: DataFrame)(implicit spark: SparkSession) = {
 
