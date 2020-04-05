@@ -4,11 +4,13 @@ import com.task.core.agg.SessionAggregator
 import com.task.core.models.Event
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.task.transformations.SessionTransformations
+import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
 
 class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFrame)(implicit spark: SparkSession) {
 
   type SessionsAndPurchases = (DataFrame, DataFrame)
+
   import spark.implicits._
 
   def getPurchasesWithSessions: SessionsAndPurchases = {
@@ -43,9 +45,8 @@ class MarketingAnalysisJobProcessor(rawEvents: DataFrame, rawPurchases: DataFram
   def channelsEngagementPerformance(sessions: DataFrame): DataFrame = {
     sessions
       .groupBy('campaignId, 'channelIid)
-      .agg(countDistinct('sessionId) as "uniqueSessions")
-      .orderBy('uniqueSessions.desc)
-      .select('channelIid)
-      .limit(1)
+      .agg(first('channelIid).over(Window.partitionBy('campaignId).orderBy(countDistinct('sessionId))) as "TopChannel")
+      .drop('channelIid)
+      .distinct()
   }
 }
