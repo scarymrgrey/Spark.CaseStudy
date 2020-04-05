@@ -57,15 +57,15 @@ object MarketingAnalysisDriver {
 
     //TASK 1.1
     saveAndGetPurchases
-     // .show()
+      .show()
 
     //TASK 1.2
     purchasesViaAggregator
-      //.show()
+      .show()
 
     // TASK 2.1
     topCampaigns(10)
-      //.show()
+      .show()
 
     //TASK 2.2
     channelsEngagementPerformance
