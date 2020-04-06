@@ -12,7 +12,7 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
 
   override def zero: SessionsWithRawEvents = SessionsWithRawEvents(List(), List())
 
-  override def reduce(sessionsWithRaw: SessionsWithRawEvents, ev: Event): SessionsWithRawEvents = {
+  override def reduce(raw: SessionsWithRawEvents, ev: Event): SessionsWithRawEvents = {
     ev.eventType match {
       case "app_open" =>
         val newSession = Session(
@@ -21,40 +21,45 @@ class SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[Ev
           ev.attributes.flatMap(_.get("campaign_id")),
           ev.attributes.flatMap(_.get("channel_id"))
         )
-        sessionsWithRaw.copy(sessions = (sessionsWithRaw.sessions :+ newSession))
+        SessionsWithRawEvents(raw.sessions :+ newSession, raw.rawEvents)
       case _ =>
-        sessionsWithRaw.copy(rawEvents = sessionsWithRaw.rawEvents :+ ev)
+        SessionsWithRawEvents(raw.sessions, raw.rawEvents :+ ev)
     }
   }
 
-  private def insertOneEvent(sessions: List[Session], event: Event): List[Session] = {
-    val (after,before) = sessions
+  private def insertOneEvent(raw: SessionsWithRawEvents, event: Event): SessionsWithRawEvents = {
+    val (after, before) = raw.sessions
       .partition(session => session.startTime.after(event.eventTime))
-    val updatedBefore = before.sorted match {
+    before.sorted match {
       case head :+ session =>
-        head :+ session.copy(
+        val updated = head :+ session.copy(
           events = session.events :+ event
         )
-    }
-    updatedBefore ::: after
-  }
-
-  @scala.annotation.tailrec
-  private def insertAllEvents(sessions: List[Session], events: List[Event]): List[Session] = {
-    events match {
-      case head :: tail =>
-        val updatedSessions = insertOneEvent(sessions, head)
-        insertAllEvents(updatedSessions, tail)
-      case Nil => sessions
+        SessionsWithRawEvents(updated ::: after, List())
+      case _ => raw
     }
   }
 
-  override def merge(b1: SessionsWithRawEvents, b2: SessionsWithRawEvents): SessionsWithRawEvents =
-    SessionsWithRawEvents(insertAllEvents(b1.sessions, b1.rawEvents) ::: insertAllEvents(b2.sessions, b2.rawEvents), List())
+  private def insertAllEvents(agg: SessionsWithRawEvents): SessionsWithRawEvents = {
+
+    @scala.annotation.tailrec
+    def inner(sessWithRaw: SessionsWithRawEvents, restEvents: List[Event]): SessionsWithRawEvents = {
+      restEvents match {
+        case head :: tail =>
+          val updatedSessions = insertOneEvent(sessWithRaw, head)
+          inner(updatedSessions, tail)
+        case Nil =>
+          sessWithRaw
+      }
+    }
+    inner(agg, agg.rawEvents)
+  }
+
+  override def merge(b1: SessionsWithRawEvents, b2: SessionsWithRawEvents): SessionsWithRawEvents = b1 ::: b2
 
   override def finish(sessionsWithRaw: SessionsWithRawEvents): List[EventOverSession] =
     for {
-      sess <- sessionsWithRaw.sessions
+      sess <- insertAllEvents(sessionsWithRaw).sessions
       ev <- sess.events
     } yield EventOverSession(
       ev.eventType,
