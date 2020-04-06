@@ -1,6 +1,6 @@
 import com.holdenkarau.spark.testing.DatasetSuiteBase
 import com.task.core.agg.SessionAggregator
-import com.task.core.data.DataLoader
+import com.task.core.infrastructure.{DataLoad, Spark}
 import com.task.core.jobs.MarketingAnalysisJobProcessor
 import com.task.core.models.Event
 import org.apache.spark.sql.functions.monotonically_increasing_id
@@ -11,7 +11,7 @@ import org.scalatest.Matchers._
 import org.apache.spark.sql.functions.rand
 
 class TaskTests extends AnyFlatSpec
-  with DatasetSuiteBase with DataLoader {
+  with DatasetSuiteBase with DataLoad {
 
   case class Purchase(purchaseId: String, purchaseTime: String,
                       billingCost: String, isConfirmed: Boolean,
@@ -31,7 +31,7 @@ class TaskTests extends AnyFlatSpec
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    val data = loadData()
+    val data = loadData
     events = data._1
       .orderBy(rand())//correctness should not depends on order
     purchases = data._2
@@ -57,7 +57,7 @@ class TaskTests extends AnyFlatSpec
     val sessions = events
       .as[Event]
       .groupByKey(r => r.userId)
-      .agg(new SessionAggregator().toColumn)
+      .agg(SessionAggregator.toColumn)
       .flatMap(_._2)
       .collect()
 

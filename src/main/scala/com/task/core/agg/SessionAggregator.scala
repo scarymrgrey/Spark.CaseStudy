@@ -30,44 +30,44 @@ object SessionAggregator extends Aggregator[Event, SessionsWithRawEvents, List[E
     }
   }
 
-  private def insertOneEvent(sessions: SortedSet[Session], event: Event): SortedSet[Session] = {
-    val (after, before): (SortedSet[Session], SortedSet[Session]) = sessions
+  private def insertOneEvent(raw: SessionsWithRawEvents, event: Event): SessionsWithRawEvents = {
+    val (after, before) = raw.sessions
       .partition(session => session.startTime.after(event.eventTime))
-    val updated: SortedSet[Session] = before.lastOption match {
+    before.lastOption match {
       case Some(session) =>
         val updatedBefore = before - session
-        val updatedSession = session.copy(
-          events = session.events :+ event
-        )
-        updatedBefore + updatedSession
-    }
-    updated ++ after
-  }
-
-  @scala.annotation.tailrec
-  private def insertAllEvents(sessions: SortedSet[Session], events: List[Event]): SortedSet[Session] = {
-    events match {
-      case Nil => sessions
-      case head :: tail =>
-        val updatedSessions = insertOneEvent(sessions, head)
-        insertAllEvents(updatedSessions, tail)
+        val updatedSession = session.addEvent(event)
+        SessionsWithRawEvents(updatedBefore + updatedSession ++ after, List.empty)
+      case _ => raw
     }
   }
 
-  override def merge(b1: SessionsWithRawEvents, b2: SessionsWithRawEvents): SessionsWithRawEvents =
-    SessionsWithRawEvents(insertAllEvents(b1.sessions, b1.rawEvents) ++ insertAllEvents(b2.sessions, b2.rawEvents), List())
+
+  private def insertAllEvents(raw: SessionsWithRawEvents): SessionsWithRawEvents = {
+    @scala.annotation.tailrec
+    def inner(raw: SessionsWithRawEvents, events: List[Event]): SessionsWithRawEvents =
+      events match {
+        case Nil => raw
+        case head :: tail =>
+          val updatedSessions = insertOneEvent(raw, head)
+          inner(updatedSessions, tail)
+      }
+    inner(raw, raw.rawEvents)
+  }
+
+  override def merge(b1: SessionsWithRawEvents, b2: SessionsWithRawEvents): SessionsWithRawEvents = b1 ::: b2
 
   override def finish(sessionsWithRaw: SessionsWithRawEvents): List[EventOverSession] =
     for {
-      sess <- sessionsWithRaw.sessions.toList
-      ev <- sess.events
+      sessions <- insertAllEvents(sessionsWithRaw).sessions.toList
+      ev <- sessions.events
     } yield EventOverSession(
       ev.eventType,
       ev.eventTime,
       ev.userId,
-      sess.campaignId,
-      sess.channelIid,
-      sess.sessionId,
+      sessions.campaignId,
+      sessions.channelIid,
+      sessions.sessionId,
       ev.attributes
     )
 

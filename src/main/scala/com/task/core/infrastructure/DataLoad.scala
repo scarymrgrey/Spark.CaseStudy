@@ -1,12 +1,12 @@
 package com.task.core.infrastructure
 
 import com.task.core.transformations.JsonTransformations
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-trait DataLoad { self: Spark =>
+trait DataLoad {
   type EventsWithPurchases = (DataFrame, DataFrame)
 
-  def loadData: EventsWithPurchases = {
+  def loadData(implicit spark: SparkSession): EventsWithPurchases = {
     import org.apache.spark.sql.types._
     import spark.implicits._
     val productsSchema = new StructType()

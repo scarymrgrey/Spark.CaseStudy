@@ -9,19 +9,24 @@ object MarketingAnalysisDriver extends Spark with DataLoad {
   def main(args: Array[String]): Unit = {
 
     val (events, purchases) = loadData
-    val sessionsTn = "sessionsTemporary"
-    val aggregatedPurchasesTn = "aggregatedPurchasesTemporary"
-    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases, sessionsTn, aggregatedPurchasesTn)
+    val jobsProcessor = new MarketingAnalysisJobProcessor(events, purchases)
     import jobsProcessor._
 
     //TASK 1.1
-    saveAndShowPurchases
+    saveAndGetPurchases
+      .show
+
     //TASK 1.2
-    showPurchasesViaAggregator
+    purchasesViaAggregator
+      .show
+
     //TASK 2.1
-    showTopCampaigns
+    topCampaigns(10)
+      .show
+    
     //TASK 2.2
-    showChannelsEngagementPerformance
+    channelsEngagementPerformance
+      .show
 
     spark.stop()
   }
