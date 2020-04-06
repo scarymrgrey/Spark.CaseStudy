@@ -23,18 +23,22 @@ class TaskTests extends AnyFlatSpec
 
   import spark.implicits._
 
+  var rawEvents: DataFrame = _
+  var rawPurchases: DataFrame = _
+
   var aggSessions: DataFrame = _
   var aggPurchases: DataFrame = _
   var processor: MarketingAnalysisJobProcessor = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    val (sessions, purchases) = loadFromSettingsWithArgs(Array())
-
-    processor = new MarketingAnalysisJobProcessor(sessions, purchases)
+    val (events, purchases) = loadFromSettingsWithArgs(Array())
+    rawEvents = events.orderBy(rand())
+    rawPurchases = purchases.orderBy(rand())
+    processor = new MarketingAnalysisJobProcessor(rawEvents, rawPurchases)
     val data = processor.getPurchasesWithSessions
-    aggSessions = data._1.orderBy(rand())
-    aggPurchases = data._2.orderBy(rand())
+    aggSessions = data._1
+    aggPurchases = data._2
     org.apache.spark.sql.catalyst.encoders.OuterScopes.addOuterScope(this)
   }
 
@@ -53,14 +57,13 @@ class TaskTests extends AnyFlatSpec
 
 
   it should "basic tests for aggregator" in {
-    val sessions = aggSessions
+    val sessions = rawEvents
       .as[Event]
       .groupByKey(r => r.userId)
       .agg(SessionAggregator.toColumn)
       .flatMap(_._2)
-      .collect()
 
-    assert(sessions.groupBy(_.sessionId).keys.toList.length == 7, "should be 7 sessions")
+    assert(sessions.collect().groupBy(_.sessionId).keys.toList.length == 7, "should be 7 sessions")
   }
 
   it should "advanced tests for aggregator" in {
