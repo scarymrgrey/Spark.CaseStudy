@@ -8,7 +8,9 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame)(implicit spark: SparkSession) {
   val sessionTableName = "sessionTable"
   val purchasesTableName = "purchasesTable"
+
   import spark.implicits._
+
   def saveAndGetPurchases: DataFrame = {
     events
       .transform(SessionTransformations.enrichWithSession)
@@ -47,12 +49,18 @@ class MarketingAnalysisJobProcessor(events: DataFrame, purchases: DataFrame)(imp
   }
 
   def channelsEngagementPerformance(implicit spark: SparkSession): DataFrame = {
+    // This is a second option to implement task using subquery instead of first() and distinct
     spark.sql(
-      s"""select
-         | distinct campaignId as Campaign,
-         | first(channelIid) over(partition by campaignId order by count(distinct sessionId) desc) as TopChannel
-         | from $sessionTableName
-         | group by campaignId, channelIid""".stripMargin)
+      s"""
+         |select campaignId as Campaign, channelIid as TopChannel
+         |from
+         |  (select campaignId,
+         |  channelIid,
+         |  row_number() over(partition by campaignId order by count(distinct sessionId) desc) as row
+         |  from $sessionTableName
+         |  group by campaignId, channelIid)
+         |where row = 1
+         """.stripMargin)
   }
 
 }
