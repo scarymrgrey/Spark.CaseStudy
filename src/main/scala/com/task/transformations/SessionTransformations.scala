@@ -2,7 +2,7 @@ package com.task.transformations
 
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, SparkSession}
 
 object SessionTransformations {
 
@@ -20,7 +20,7 @@ object SessionTransformations {
       .withColumn("channelIid", lastInCol($"attributes.channel_id"))
   }
 
-  def transformWithJoin(joinDF: DataFrame)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+  def transformWithJoin[T](joinDF: DataFrame)(df: Dataset[T])(implicit spark: SparkSession): DataFrame = {
     import spark.implicits._
     df.join(joinDF, $"attributes.purchase_id" === 'purchaseId)
       .select($"purchases.*",
