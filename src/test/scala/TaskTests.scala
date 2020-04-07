@@ -33,9 +33,9 @@ class TaskTests extends AnyFlatSpec
     super.beforeAll()
     val data = loadData()
     events = data._1
-      .orderBy(rand())//correctness should not depends on order
+      .orderBy(rand()) //correctness should not depends on order
     purchases = data._2
-      .orderBy(rand())//correctness should not depends on order
+      .orderBy(rand()) //correctness should not depends on order
     processor = new MarketingAnalysisJobProcessor(events, purchases)
     org.apache.spark.sql.catalyst.encoders.OuterScopes.addOuterScope(this)
   }
@@ -57,7 +57,7 @@ class TaskTests extends AnyFlatSpec
     val sessions = events
       .as[Event]
       .groupByKey(r => r.userId)
-      .agg(new SessionAggregator().toColumn)
+      .agg(SessionAggregator.toColumn)
       .flatMap(_._2)
       .collect()
 
